@@ -95,6 +95,10 @@ namespace Photon.Pun.Demo.Asteroids
             //{
             //    return;
             //}
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
 
             if (!controllable)
             {
@@ -112,9 +116,18 @@ namespace Photon.Pun.Demo.Asteroids
                 rigidbody.velocity = rigidbody.velocity.normalized * MaxSpeed * 1000.0f;
             }
 
+            photonView.RPC("Test", RpcTarget.Others, force, rigidbody.velocity);
+
             // NOTE (kent)
             // Removed for test only
             //CheckExitScreen();
+        }
+
+        [PunRPC]
+        public void Test(Vector3 force, Vector3 velocity, PhotonMessageInfo info)
+        {
+            rigidbody.AddForce(force);
+            rigidbody.velocity = velocity;
         }
 
         #endregion
