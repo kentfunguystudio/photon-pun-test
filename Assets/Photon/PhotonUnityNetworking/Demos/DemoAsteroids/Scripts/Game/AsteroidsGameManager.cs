@@ -178,7 +178,7 @@ namespace Photon.Pun.Demo.Asteroids
 
             if (PhotonNetwork.IsMasterClient)
             {
-                StartCoroutine(SpawnAsteroid());
+                //StartCoroutine(SpawnAsteroid());
             }
         }
 
