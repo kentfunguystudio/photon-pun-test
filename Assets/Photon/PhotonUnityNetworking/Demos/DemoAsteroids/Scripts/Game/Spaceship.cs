@@ -17,7 +17,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 namespace Photon.Pun.Demo.Asteroids
 {
-    public class Spaceship : MonoBehaviourPun, IPunObservable
+    public class Spaceship : MonoBehaviour
     {
         public float RotationSpeed = 90.0f;
         public float MovementSpeed = 2.0f;
@@ -83,10 +83,10 @@ namespace Photon.Pun.Demo.Asteroids
 
         public void FixedUpdate()
         {
-            //if (!photonView.IsMine)
-            //{
-            //    return;
-            //}
+            if (!photonView.IsMine)
+            {
+                return;
+            }
 
             if (!controllable)
             {
@@ -104,7 +104,7 @@ namespace Photon.Pun.Demo.Asteroids
                 rigidbody.velocity = rigidbody.velocity.normalized * MaxSpeed * 1000.0f;
             }
 
-            //CheckExitScreen();
+            CheckExitScreen();
         }
 
         #endregion
@@ -186,22 +186,8 @@ namespace Photon.Pun.Demo.Asteroids
             EngineTrail.SetActive(true);
             Destruction.Stop();
         }
-
+        
         #endregion
-
-        public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-        {
-            if (stream.IsWriting)
-            {
-                stream.SendNext(rotation);
-                stream.SendNext(acceleration);
-            }
-            else
-            {
-                this.rotation = (float)stream.ReceiveNext();
-                this.acceleration = (float)stream.ReceiveNext();
-            }
-        }
 
         private void CheckExitScreen()
         {
