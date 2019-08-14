@@ -97,6 +97,8 @@ namespace Photon.Pun.Demo.Asteroids
             //}
             if (!PhotonNetwork.IsMasterClient)
             {
+                rigidbody.position = Vector3.MoveTowards(rigidbody.position, networkPosition, Time.fixedDeltaTime);
+                rigidbody.rotation = Quaternion.RotateTowards(rigidbody.rotation, networkRotation, Time.fixedDeltaTime * 100.0f);
                 return;
             }
 
@@ -108,26 +110,31 @@ namespace Photon.Pun.Demo.Asteroids
             Quaternion rot = rigidbody.rotation * Quaternion.Euler(0, rotation * RotationSpeed * Time.fixedDeltaTime, 0);
             rigidbody.MoveRotation(rot);
 
-            Vector3 force = (rot * Vector3.forward) * acceleration * 1000.0f * MovementSpeed * Time.fixedDeltaTime;
+            Vector3 force = (rot * Vector3.forward) * acceleration * 500.0f * MovementSpeed * Time.fixedDeltaTime;
             rigidbody.AddForce(force);
 
-            if (rigidbody.velocity.magnitude > (MaxSpeed * 1000.0f))
+            if (rigidbody.velocity.magnitude > (MaxSpeed * 500.0f))
             {
-                rigidbody.velocity = rigidbody.velocity.normalized * MaxSpeed * 1000.0f;
+                rigidbody.velocity = rigidbody.velocity.normalized * MaxSpeed * 500.0f;
             }
 
-            photonView.RPC("Test", RpcTarget.Others, force, rigidbody.velocity);
-
-            // NOTE (kent)
-            // Removed for test only
-            //CheckExitScreen();
+            photonView.RPC("Test", RpcTarget.Others, rigidbody.position, rigidbody.rotation, rigidbody.velocity);
+            
+            CheckExitScreen();
         }
 
+        private Vector3 networkPosition;
+        private Quaternion networkRotation;
+
         [PunRPC]
-        public void Test(Vector3 force, Vector3 velocity, PhotonMessageInfo info)
+        public void Test(Vector3 position, Quaternion rotation, Vector3 velocity, PhotonMessageInfo info)
         {
-            rigidbody.AddForce(force);
+            networkPosition = position;
+            networkRotation = rotation;
             rigidbody.velocity = velocity;
+
+            float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.timestamp));
+            networkPosition += (rigidbody.velocity * lag);
         }
 
         #endregion
@@ -218,6 +225,7 @@ namespace Photon.Pun.Demo.Asteroids
         {
             if (stream.IsWriting)
             {
+                Debug.LogError("rot " + rotation + " acceleration " + acceleration);
                 stream.SendNext(rotation);
                 stream.SendNext(acceleration);
             }
@@ -237,14 +245,16 @@ namespace Photon.Pun.Demo.Asteroids
             
             if (Mathf.Abs(rigidbody.position.x) > (Camera.main.orthographicSize * Camera.main.aspect))
             {
-                rigidbody.position = new Vector3(-Mathf.Sign(rigidbody.position.x) * Camera.main.orthographicSize * Camera.main.aspect, 0, rigidbody.position.z);
-                rigidbody.position -= rigidbody.position.normalized * 0.1f; // offset a little bit to avoid looping back & forth between the 2 edges 
+                rigidbody.velocity = Vector3.zero;
+                //rigidbody.position = new Vector3(-Mathf.Sign(rigidbody.position.x) * Camera.main.orthographicSize * Camera.main.aspect, 0, rigidbody.position.z);
+                //rigidbody.position -= rigidbody.position.normalized * 0.1f; // offset a little bit to avoid looping back & forth between the 2 edges 
             }
 
             if (Mathf.Abs(rigidbody.position.z) > Camera.main.orthographicSize)
             {
-                rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y, -Mathf.Sign(rigidbody.position.z) * Camera.main.orthographicSize);
-                rigidbody.position -= rigidbody.position.normalized * 0.1f; // offset a little bit to avoid looping back & forth between the 2 edges 
+                rigidbody.velocity = Vector3.zero;
+                //rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y, -Mathf.Sign(rigidbody.position.z) * Camera.main.orthographicSize);
+                //rigidbody.position -= rigidbody.position.normalized * 0.1f; // offset a little bit to avoid looping back & forth between the 2 edges 
             }
         }
     }
